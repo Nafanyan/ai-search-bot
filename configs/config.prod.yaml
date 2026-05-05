@@ -1,0 +1,9 @@
+telegram:
+  token: "your_prod_bot_token_here"
+
+server:
+  debug: false
+
+log:
+  level: "info"
+  file: "logs/app.log"

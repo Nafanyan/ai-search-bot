@@ -1,0 +1,8 @@
+telegram:
+  token: "your_dev_bot_token_here"
+
+server:
+  debug: true
+
+log:
+  level: "debug"

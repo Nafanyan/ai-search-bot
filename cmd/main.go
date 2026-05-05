@@ -9,7 +9,9 @@ import (
 
 	"ai-search-bot/internal/bot"
 	"ai-search-bot/internal/config"
+	"ai-search-bot/internal/handler"
 	"ai-search-bot/internal/logger"
+	"ai-search-bot/internal/services"
 )
 
 func main() {
@@ -31,10 +33,19 @@ func main() {
 	}
 	defer cleanup()
 
+	searchService := &services.MockSearchService{}
+	h := handler.NewMessageHandler(searchService)
+
+	b, err := bot.New(cfg, log, h)
+	if err != nil {
+		log.Error("failed to create bot", "err", err)
+		os.Exit(1)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := bot.Run(ctx, cfg, log); err != nil {
+	if err := b.Run(ctx); err != nil {
 		log.Error("bot stopped with error", "err", err)
 		os.Exit(1)
 	}
