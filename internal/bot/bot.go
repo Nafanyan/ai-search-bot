@@ -96,6 +96,7 @@ func (b *Bot) dispatch(msg *tgbotapi.Message) {
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ReplyToMessageID = msg.MessageID
+
 	if _, err := b.api.Send(reply); err != nil {
 		b.logger.Error("send failed", "err", err)
 	}

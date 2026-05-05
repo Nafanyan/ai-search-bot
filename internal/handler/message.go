@@ -1,46 +1,36 @@
 package handler
 
 import (
-	"sync"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"ai-search-bot/internal/services"
+	"ai-search-bot/internal/storage"
 )
 
 type MessageHandler struct {
-	search         services.SearchService
-	searchingChats map[int64]bool
-	mu             sync.Mutex
+	search  services.SearchService
+	storage storage.ChatStorage
 }
 
-func NewMessageHandler(search services.SearchService) *MessageHandler {
+func NewMessageHandler(search services.SearchService, store storage.ChatStorage) *MessageHandler {
 	return &MessageHandler{
-		search:         search,
-		searchingChats: make(map[int64]bool),
+		search:  search,
+		storage: store,
 	}
 }
 
 func (h *MessageHandler) HandleCommand(cmd string, msg *tgbotapi.Message) (string, error) {
 	switch cmd {
 	case CommandSearch:
-		h.mu.Lock()
-		h.searchingChats[msg.Chat.ID] = true
-		h.mu.Unlock()
+		h.storage.SetState(msg.Chat.ID, storage.StateSearching)
 		return "Я переключился в режим поиска ресурсов в интернете. Напиши, что ты хочешь найти.", nil
 	}
 	return "", nil
 }
 
 func (h *MessageHandler) HandleMessage(msg *tgbotapi.Message) (string, error) {
-	h.mu.Lock()
-	searching := h.searchingChats[msg.Chat.ID]
-	if searching {
-		delete(h.searchingChats, msg.Chat.ID)
-	}
-	h.mu.Unlock()
-
-	if searching {
+	if h.storage.GetState(msg.Chat.ID) == storage.StateSearching {
+		h.storage.SetState(msg.Chat.ID, storage.StateIdle)
 		return h.search.Search(msg.Text)
 	}
 
